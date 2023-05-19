@@ -2,6 +2,7 @@ package bot
 
 import (
 	"log"
+	"math/rand"
 	"solid-eureka/binance"
 	"solid-eureka/yahoo"
 	"sync"
@@ -24,7 +25,8 @@ type Bot struct {
 
 func (b Bot) Trade() {
 	for {
-		time.Sleep(time.Second)
+		b.UpdateScoreboard()
+		time.Sleep(time.Minute * time.Duration(rand.Intn(5)))
 		err := binance.Ping()
 		if err != nil {
 			log.Println(err)
@@ -45,7 +47,6 @@ func (b Bot) Trade() {
 		} else if shortAvg < longAvg && currentPrice < longAvg {
 			b.Buy(currentPrice)
 		}
-		b.UpdateScoreboard()
 	}
 }
 
@@ -55,20 +56,20 @@ func (b Bot) UpdateScoreboard() {
 	b.Mu.Unlock()
 }
 
-func (b Bot) Sell(price float64) {
+func (b *Bot) Sell(price float64) {
 	if b.Shares == 0 {
 		return
 	}
 	b.Cash += b.Shares * price
 	b.Shares = 0
-	log.Printf("SELL: %s sold %.2f shares at $%.2f", b.Name, b.Shares, price)
+	log.Printf("SELL: %s sold %f shares at $%.2f", b.Name, b.Shares, price)
 }
 
-func (b Bot) Buy(price float64) {
+func (b *Bot) Buy(price float64) {
 	if b.Cash < 1 {
 		return
 	}
-	b.Shares += price / b.Cash
+	b.Shares += b.Cash / price
 	b.Cash = 0
-	log.Printf("BUY: %s bought %.2f shares at $%.2f", b.Name, b.Shares, price)
+	log.Printf("BUY: %s bought %f shares at $%.2f", b.Name, b.Shares, price)
 }
