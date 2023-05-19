@@ -1,8 +1,10 @@
 package binance
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 )
 
 var baseURL = "https://api.binance.us"
@@ -20,4 +22,31 @@ func Ping() error {
 		return fmt.Errorf("binance.Ping(): %s", response.Status)
 	}
 	return nil
+}
+
+func GetPrice() (float64, error) {
+	endpoint := "/api/v3/ticker/price?symbol=BTCUSD"
+
+	type quote struct {
+		Symbol string `json:"symbol"`
+		Price  string `json:"price"`
+	}
+
+	response, err := http.Get(baseURL + endpoint)
+	if err != nil || response.StatusCode != 200 {
+		return 0, fmt.Errorf("binance.GetPrice(): %s, %s", err, response.Status)
+	}
+	defer response.Body.Close()
+
+	var q quote
+	err = json.NewDecoder(response.Body).Decode(&q)
+	if err != nil {
+		return 0, fmt.Errorf("binance.GetPrice(): %s", err)
+	}
+
+	price, err := strconv.ParseFloat(q.Price, 64)
+	if err != nil {
+		return 0, fmt.Errorf("binance.GetPrice(): %s", err)
+	}
+	return price, nil
 }
