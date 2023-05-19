@@ -6,10 +6,8 @@ import (
 )
 
 var baseURL = "https://api.binance.us"
-
-func GetAverages(longWin int, shortWin int) (float64, float64, error) {
-	return 0, 0, nil
-}
+var apiKey = "<your_api_key>"
+var secretKey = "<your_secret_key>"
 
 func Ping() error {
 	endpoint := "/api/v3/ping"

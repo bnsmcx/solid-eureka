@@ -3,6 +3,7 @@ package bot
 import (
 	"log"
 	"solid-eureka/binance"
+	"solid-eureka/yahoo"
 	"sync"
 	"time"
 )
@@ -29,7 +30,7 @@ func (b Bot) Trade() {
 			continue
 		}
 
-		longAvg, shortAvg, err := binance.GetAverages(b.LongWin, b.ShortWin)
+		longAvg, shortAvg, err := yahoo.GetAverages(b.LongWin, b.ShortWin)
 		if err != nil {
 			log.Println("Bot.Trade(): ", err)
 		}
