@@ -10,13 +10,17 @@ import (
 )
 
 type Summary struct {
-	Cash float64
+	Cash     float64
+	Shares   float64
+	TotalVal float64
 }
 
 type Bot struct {
 	Name     string
 	Cash     float64
 	Shares   float64
+	Basis    float64
+	TotalVal float64
 	LongWin  int
 	ShortWin int
 	Mu       *sync.Mutex
@@ -50,9 +54,10 @@ func (b Bot) Trade() {
 	}
 }
 
-func (b Bot) UpdateScoreboard() {
+func (b *Bot) UpdateScoreboard() {
 	b.Mu.Lock()
-	b.SB[b.Name] = Summary{b.Cash}
+	b.TotalVal = b.Cash + (b.Shares * b.Basis)
+	b.SB[b.Name] = Summary{b.Cash, b.Shares, b.TotalVal}
 	b.Mu.Unlock()
 }
 
@@ -71,5 +76,6 @@ func (b *Bot) Buy(price float64) {
 	}
 	b.Shares += b.Cash / price
 	b.Cash = 0
+	b.Basis = price
 	log.Printf("BUY: %s bought %f shares at $%.2f", b.Name, b.Shares, price)
 }
