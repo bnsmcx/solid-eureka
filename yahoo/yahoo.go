@@ -66,6 +66,5 @@ func getAverage(window int) (float64, error) {
 		sum += num
 		length++
 	}
-	fmt.Println(window, sum, length)
 	return sum / length, nil
 }
