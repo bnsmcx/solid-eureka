@@ -1,10 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"log"
+	"net/http"
 	"solid-eureka/bot"
 	"sync"
-	"time"
 )
 
 var scoreboard = make(map[string]bot.Summary)
@@ -25,10 +26,22 @@ func main() {
 	for _, b := range bots {
 		go b.Trade()
 	}
-	time.Sleep(time.Second * time.Duration(7))
+
+	http.HandleFunc("/", handleScoreboard)
+	err := http.ListenAndServe(":8000", nil)
+	if err != nil {
+		log.Fatalln(err)
+	}
+}
+
+func handleScoreboard(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("       SCOREBOARD       \n"))
+	w.Write([]byte(" -----------------------\n"))
 	mu.Lock()
 	for k, v := range scoreboard {
-		log.Println(k, v)
+		entry := fmt.Sprintf("| %-*s|%*.2f |\n", 10, k, 10, v.Cash)
+		w.Write([]byte(entry))
 	}
+	w.Write([]byte(" -----------------------\n"))
 	mu.Unlock()
 }
