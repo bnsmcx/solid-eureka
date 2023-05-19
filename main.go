@@ -1,13 +1,11 @@
 package main
 
-type botSetting struct {
-	name        string
-	cash        int
-	longWindow  int
-	shortWindow int
-}
+import (
+	"log"
+	"solid-eureka/bot"
+)
 
-var botSettings = []botSetting{
+var bots = []bot.Bot{
 	{"Alpha", 100, 138, 14},
 	{"Bravo", 100, 59, 12},
 	{"Charlie", 100, 109, 2},
@@ -19,7 +17,7 @@ var botSettings = []botSetting{
 }
 
 func main() {
-	for _, s := range botSettings {
-		go bot.Launch(s.name, s.cash, s.longWindow, s.shortWindow)
+	for _, b := range bots {
+		log.Println(b)
 	}
 }
