@@ -30,11 +30,11 @@ func (b Bot) Trade() {
 			continue
 		}
 
-		longAvg, shortAvg, err := yahoo.GetAverages(b.LongWin, b.ShortWin)
+		//longAvg, shortAvg, err := yahoo.GetAverages(b.LongWin, b.ShortWin)
+		_, _, err = yahoo.GetAverages(b.LongWin, b.ShortWin)
 		if err != nil {
 			log.Println("Bot.Trade(): ", err)
 		}
-		log.Println(longAvg, shortAvg)
 		//if short_avg > long_avg:
 		//self.sell(daily_price)
 		//else:
