@@ -22,6 +22,13 @@ type Bot struct {
 
 func (b Bot) Trade() {
 	for {
+		time.Sleep(time.Second)
+		err := binance.Ping()
+		if err != nil {
+			log.Println(err)
+			continue
+		}
+
 		longAvg, shortAvg, err := binance.GetAverages(b.LongWin, b.ShortWin)
 		if err != nil {
 			log.Println("Bot.Trade(): ", err)
@@ -32,7 +39,6 @@ func (b Bot) Trade() {
 		//else:
 		//self.buy(daily_price)
 		b.UpdateScoreboard()
-		time.Sleep(time.Second)
 	}
 }
 
