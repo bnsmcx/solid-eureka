@@ -7,8 +7,8 @@ import (
 	"strconv"
 )
 
-func GetAverages(longWin, shortWin, tick int) (float64, float64, error) {
-	f, err := os.Open("/home/ben/repos/solid-eureka/test/test_data/max.csv")
+func GetAverages(longWin, shortWin, tick int) (float64, float64, float64, error) {
+	f, err := os.Open("/home/ben/repos/solid-eureka/test/test_data/2022.csv")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -23,6 +23,9 @@ func GetAverages(longWin, shortWin, tick int) (float64, float64, error) {
 
 	data := make([]float64, longWin)
 	for i := tick; i < longWin+tick; i++ {
+		if longWin+tick > len(records) {
+			break
+		}
 		num, err := strconv.ParseFloat(records[i][0], 64)
 		if err != nil {
 			log.Fatal(err)
@@ -41,5 +44,5 @@ func GetAverages(longWin, shortWin, tick int) (float64, float64, error) {
 		shortSum += v
 	}
 
-	return longSum / float64(longWin), shortSum / float64(shortWin), nil
+	return longSum / float64(longWin), shortSum / float64(shortWin), data[len(data)-1], nil
 }
