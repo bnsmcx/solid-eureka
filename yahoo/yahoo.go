@@ -59,6 +59,9 @@ func getAverage(window int) (float64, error) {
 	sum := 0.0
 	length := 0.0
 	for _, line := range data[1:] {
+		if line[4] == "null" {
+			break
+		}
 		num, err := strconv.ParseFloat(line[4], 64)
 		if err != nil {
 			return 0, err

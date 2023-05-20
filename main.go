@@ -42,9 +42,17 @@ func handleScoreboard(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(entry))
 	w.Write([]byte(" -----------------------------------------------\n"))
 	mu.Lock()
-	for k, v := range scoreboard {
+
+	order := []string{
+		"Average", "Alpha", "Bravo", "Charlie", "Delta", "Echo", "Foxtrot", "Golf",
+	}
+
+	for _, name := range order {
 		entry := fmt.Sprintf("| %-*s|%*.2f |%*f |%*.2f |\n",
-			10, k, 10, v.Cash, 10, v.Shares, 10, v.TotalVal)
+			10, name,
+			10, scoreboard[name].Cash,
+			10, scoreboard[name].Shares,
+			10, scoreboard[name].TotalVal)
 		w.Write([]byte(entry))
 	}
 	w.Write([]byte(" -----------------------------------------------\n"))
