@@ -46,8 +46,9 @@ func handleScoreboard(w http.ResponseWriter, r *http.Request) {
 	order := []string{
 		"Average", "Alpha", "Bravo", "Charlie", "Delta", "Echo", "Foxtrot", "Golf",
 	}
-
+	portfolioValue := 0.0
 	for _, name := range order {
+		portfolioValue += scoreboard[name].TotalVal
 		entry := fmt.Sprintf("| %-*s|%*.2f |%*f |%*.2f |\n",
 			10, name,
 			10, scoreboard[name].Cash,
@@ -56,5 +57,7 @@ func handleScoreboard(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(entry))
 	}
 	w.Write([]byte(" -----------------------------------------------\n"))
+	w.Write([]byte(fmt.Sprintf("      Portfolio Value:    %f\n",
+		portfolioValue)))
 	mu.Unlock()
 }
