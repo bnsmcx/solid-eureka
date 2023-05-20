@@ -2,11 +2,9 @@ package bot
 
 import (
 	"log"
-	"math/rand"
 	"solid-eureka/binance"
-	"solid-eureka/yahoo"
+	"solid-eureka/test"
 	"sync"
-	"time"
 )
 
 type Summary struct {
@@ -28,16 +26,18 @@ type Bot struct {
 }
 
 func (b Bot) Trade() {
+	testTick := 0
 	for {
 		b.UpdateScoreboard()
-		time.Sleep(time.Minute * time.Duration(rand.Intn(5)))
+		//time.Sleep(time.Minute * time.Duration(rand.Intn(5)))
 		err := binance.Ping()
 		if err != nil {
 			log.Println(err)
 			continue
 		}
 
-		longAvg, shortAvg, err := yahoo.GetAverages(b.LongWin, b.ShortWin)
+		//longAvg, shortAvg, err := yahoo.GetAverages(b.LongWin, b.ShortWin)
+		longAvg, shortAvg, err := test.GetAverages(b.LongWin, b.ShortWin, testTick)
 		if err != nil {
 			log.Println("Bot.Trade(): ", err)
 		}
@@ -51,6 +51,7 @@ func (b Bot) Trade() {
 		} else if shortAvg < longAvg && currentPrice < longAvg {
 			b.Buy(currentPrice)
 		}
+		testTick++
 	}
 }
 
