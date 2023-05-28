@@ -1,7 +1,6 @@
 package bot
 
 import (
-	"fmt"
 	"log"
 	"solid-eureka/test"
 	"sync"
@@ -37,6 +36,7 @@ func (b *Bot) Trade() {
 
 		//longAvg, shortAvg, err := yahoo.GetAverages(b.LongWin, b.ShortWin)
 		shortAvg, longAvg, longMAD, currentPrice, err := test.GetAverages(b.LongWin, b.ShortWin, day)
+		_ = longMAD
 		if err != nil {
 			log.Println("Bot.Trade(): ", err)
 			return
@@ -47,13 +47,9 @@ func (b *Bot) Trade() {
 			log.Println("Bot.Trade(): ", err)
 		}
 
-		if b.Name == "Average" {
-			fmt.Printf("ShortAVG: %.2f, LongAVG: %.2f, LongMAD: %.2f, Threshold: %.2f\n",
-				shortAvg, longAvg, longMAD, longMAD+longAvg)
-		}
-		if shortAvg > longAvg+longMAD {
+		if shortAvg > longAvg+longMAD && b.Shares > 0.0 {
 			b.Sell(currentPrice)
-		} else if shortAvg < longAvg-longMAD {
+		} else if shortAvg < longAvg-longMAD && b.Cash > 0.0 {
 			b.Buy(currentPrice)
 		}
 		day++
@@ -69,18 +65,12 @@ func (b *Bot) UpdateScoreboard() {
 }
 
 func (b *Bot) Sell(price float64) {
-	if b.Shares == 0 {
-		return
-	}
 	b.Cash += b.Shares * price
-	b.Shares = 0
 	log.Printf("SELL: %s sold %f shares at $%.2f", b.Name, b.Shares, price)
+	b.Shares = 0
 }
 
 func (b *Bot) Buy(price float64) {
-	if b.Cash < 1 {
-		return
-	}
 	b.Shares += b.Cash / price
 	b.Cash = 0
 	b.Basis = price
