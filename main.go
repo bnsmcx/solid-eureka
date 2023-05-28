@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"solid-eureka/bot"
+	"strings"
 	"sync"
 )
 
@@ -37,29 +38,39 @@ func main() {
 }
 
 func handleScoreboard(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("                   SCOREBOARD                   \n"))
-	w.Write([]byte(" -----------------------------------------------\n"))
-	entry := fmt.Sprintf("| %*s|%*s |%*s |%*s |\n",
-		10, " ", 10, "Cash", 10, "Shares", 10, "Total")
-	w.Write([]byte(entry))
-	w.Write([]byte(" -----------------------------------------------\n"))
-	mu.Lock()
+	w.Write([]byte(getScoreboard()))
+}
 
-	order := []string{
-		"Average", "Alpha", "Bravo", "Charlie", "Delta", "Echo", "Foxtrot", "Golf",
-	}
+func getScoreboard() string {
+	var sb strings.Builder
+
+	headerFormat := "| %*s|%*s |%*s |%*s |\n"
+	entryFormat := "| %-*s|%*.2f |%*f |%*.2f |\n"
+	border := " -----------------------------------------------\n"
+
+	sb.WriteString("                   SCOREBOARD                   \n")
+	sb.WriteString(border)
+	sb.WriteString(fmt.Sprintf(headerFormat, 10, " ", 10, "Cash", 10, "Shares", 10, "Total"))
+	sb.WriteString(border)
+
+	order := []string{"Average", "Alpha", "Bravo", "Charlie", "Delta", "Echo", "Foxtrot", "Golf"}
+
 	portfolioValue := 0.0
+
+	mu.Lock()
 	for _, name := range order {
 		portfolioValue += scoreboard[name].TotalVal
-		entry := fmt.Sprintf("| %-*s|%*.2f |%*f |%*.2f |\n",
+		entry := fmt.Sprintf(entryFormat,
 			10, name,
 			10, scoreboard[name].Cash,
 			10, scoreboard[name].Shares,
 			10, scoreboard[name].TotalVal)
-		w.Write([]byte(entry))
+		sb.WriteString(entry)
 	}
-	w.Write([]byte(" -----------------------------------------------\n"))
-	w.Write([]byte(fmt.Sprintf("      Portfolio Value:    %f\n",
-		portfolioValue)))
 	mu.Unlock()
+
+	sb.WriteString(border)
+	sb.WriteString(fmt.Sprintf("      Portfolio Value:    %f\n", portfolioValue))
+
+	return sb.String()
 }
