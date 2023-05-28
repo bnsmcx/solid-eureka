@@ -10,7 +10,7 @@ import (
 )
 
 func GetAverages(longWin, shortWin, day int) (float64, float64, float64, float64, error) {
-	f, err := os.Open("/home/ben/repos/solid-eureka/test/test_data/2020.csv")
+	f, err := os.Open("/home/ben/repos/solid-eureka/test/test_data/max.csv")
 	if err != nil {
 		log.Fatal(err)
 	}

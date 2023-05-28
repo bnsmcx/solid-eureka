@@ -4,7 +4,6 @@ import (
 	"log"
 	"solid-eureka/test"
 	"sync"
-	"time"
 )
 
 type Summary struct {
@@ -30,21 +29,21 @@ func (b *Bot) Trade() {
 	for {
 		b.UpdateScoreboard()
 		if day > 365 {
-			time.Sleep(time.Minute)
-			continue
+			return
 		}
 
 		//longAvg, shortAvg, err := yahoo.GetAverages(b.LongWin, b.ShortWin)
 		shortAvg, longAvg, longMAD, currentPrice, err := test.GetAverages(b.LongWin, b.ShortWin, day)
 		_ = longMAD
 		if err != nil {
-			log.Println("Bot.Trade(): ", err)
+			//log.Println("Bot.Trade(): ", err)
 			return
 		}
 		b.Basis = currentPrice
 		//currentPrice, err := binance.GetPrice()
 		if err != nil {
-			log.Println("Bot.Trade(): ", err)
+			//log.Println("Bot.Trade(): ", err)
+			return
 		}
 
 		if shortAvg > longAvg+longMAD && b.Shares > 0.0 {

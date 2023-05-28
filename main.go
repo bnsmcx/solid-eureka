@@ -13,7 +13,32 @@ var scoreboard = make(map[string]bot.Summary)
 var mu sync.Mutex
 
 func main() {
-	server()
+	//server()
+	findOptimalBotSettings()
+}
+
+func findOptimalBotSettings() {
+	var topPerformer float64
+	var settings bot.Bot
+
+	for i := 18; i > 0; i-- {
+		for j := 9; j > 0; j-- {
+			b := bot.Bot{
+				Cash:     100,
+				LongWin:  i,
+				ShortWin: j,
+				Mu:       &mu,
+				SB:       scoreboard,
+			}
+			b.Trade()
+			if b.TotalVal > topPerformer {
+				topPerformer = b.TotalVal
+				settings = b
+			}
+		}
+	}
+	fmt.Println("\n\nTop Performer: ", topPerformer)
+	fmt.Printf("%+v\n", settings)
 }
 
 func server() {
