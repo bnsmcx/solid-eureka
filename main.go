@@ -74,17 +74,20 @@ func findOptimalBotSettings() {
 
 func server() {
 	var bots = []bot.Bot{
-		{Name: "2015", Cash: 100, LongWin: 31, ShortWin: 3, MADMultiplier: 3.0, Mu: &mu, SB: scoreboard},
-		{Name: "2016", Cash: 100, LongWin: 15, ShortWin: 3, MADMultiplier: 2.5, Mu: &mu, SB: scoreboard},
-		{Name: "2017", Cash: 100, LongWin: 28, ShortWin: 24, MADMultiplier: 0.5, Mu: &mu, SB: scoreboard},
-		{Name: "2018", Cash: 100, LongWin: 30, ShortWin: 13, MADMultiplier: 1.0, Mu: &mu, SB: scoreboard},
-		{Name: "2019", Cash: 100, LongWin: 12, ShortWin: 3, MADMultiplier: 2.0, Mu: &mu, SB: scoreboard},
-		{Name: "2020", Cash: 100, LongWin: 37, ShortWin: 9, MADMultiplier: 2.0, Mu: &mu, SB: scoreboard},
-		{Name: "2021", Cash: 100, LongWin: 24, ShortWin: 16, MADMultiplier: 0.0, Mu: &mu, SB: scoreboard},
-		{Name: "2022", Cash: 100, LongWin: 25, ShortWin: 16, MADMultiplier: 0.5, Mu: &mu, SB: scoreboard},
+		{Name: "2015", Cash: 100, LongWin: 31, ShortWin: 3, MADMultiplier: 3.0},
+		{Name: "2016", Cash: 100, LongWin: 15, ShortWin: 3, MADMultiplier: 2.5},
+		{Name: "2017", Cash: 100, LongWin: 28, ShortWin: 24, MADMultiplier: 0.5},
+		{Name: "2018", Cash: 100, LongWin: 30, ShortWin: 13, MADMultiplier: 1.0},
+		{Name: "2019", Cash: 100, LongWin: 12, ShortWin: 3, MADMultiplier: 2.0},
+		{Name: "2020", Cash: 100, LongWin: 37, ShortWin: 9, MADMultiplier: 2.0},
+		{Name: "2021", Cash: 100, LongWin: 24, ShortWin: 16, MADMultiplier: 0.0},
+		{Name: "2022", Cash: 100, LongWin: 25, ShortWin: 16, MADMultiplier: 0.5},
 	}
 	for _, b := range bots {
 		b := b
+		b.Mu = &mu
+		b.SB = scoreboard
+		b.EnableLogging = true
 		go b.Trade()
 	}
 
@@ -111,7 +114,7 @@ func getScoreboard() string {
 	sb.WriteString(fmt.Sprintf(headerFormat, 10, " ", 10, "Cash", 10, "Shares", 10, "Total"))
 	sb.WriteString(border)
 
-	order := []string{"Average", "Alpha", "Bravo", "Charlie", "Delta", "Echo", "Foxtrot", "Golf"}
+	order := []string{"2015", "2016", "2017", "2018", "2019", "2020", "2021", "2022"}
 
 	portfolioValue := 0.0
 
