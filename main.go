@@ -23,7 +23,13 @@ var bots = []bot.Bot{
 }
 
 func main() {
+
 	for _, b := range bots {
+		go b.Trade()
+	}
+
+	for _, b := range bots {
+		b := b
 		go b.Trade()
 	}
 

@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"fmt"
 	"log"
 	"solid-eureka/test"
 	"sync"
@@ -25,44 +26,45 @@ type Bot struct {
 	SB       map[string]Summary
 }
 
-func (b Bot) Trade() {
-	testTick := 0
+func (b *Bot) Trade() {
+	day := 0
 	for {
 		b.UpdateScoreboard()
-		if testTick > 3000 {
+		if day > 365 {
 			time.Sleep(time.Minute)
 			continue
 		}
-		//time.Sleep(time.Minute * time.Duration(rand.Intn(5)))
-		//err := binance.Ping()
-		//if err != nil {
-		//	log.Println(err)
-		//	continue
-		//}
 
 		//longAvg, shortAvg, err := yahoo.GetAverages(b.LongWin, b.ShortWin)
-		longAvg, shortAvg, currentPrice, err := test.GetAverages(b.LongWin, b.ShortWin, testTick)
+		shortAvg, longAvg, longMAD, currentPrice, err := test.GetAverages(b.LongWin, b.ShortWin, day)
 		if err != nil {
 			log.Println("Bot.Trade(): ", err)
+			return
 		}
+		b.Basis = currentPrice
 		//currentPrice, err := binance.GetPrice()
 		if err != nil {
 			log.Println("Bot.Trade(): ", err)
 		}
 
-		if shortAvg > longAvg && currentPrice > longAvg {
+		if b.Name == "Average" {
+			fmt.Printf("ShortAVG: %.2f, LongAVG: %.2f, LongMAD: %.2f, Threshold: %.2f\n",
+				shortAvg, longAvg, longMAD, longMAD+longAvg)
+		}
+		if shortAvg > longAvg+longMAD {
 			b.Sell(currentPrice)
-		} else if shortAvg < longAvg && currentPrice < longAvg {
+		} else if shortAvg < longAvg-longMAD {
 			b.Buy(currentPrice)
 		}
-		testTick++
+		day++
 	}
 }
 
 func (b *Bot) UpdateScoreboard() {
 	b.Mu.Lock()
 	b.TotalVal = b.Cash + (b.Shares * b.Basis)
-	b.SB[b.Name] = Summary{b.Cash, b.Shares, b.TotalVal}
+	summary := Summary{b.Cash, b.Shares, b.TotalVal}
+	b.SB[b.Name] = summary
 	b.Mu.Unlock()
 }
 
