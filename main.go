@@ -12,19 +12,21 @@ import (
 var scoreboard = make(map[string]bot.Summary)
 var mu sync.Mutex
 
-var bots = []bot.Bot{
-	{"Alpha", 100, 0, 0, 0, 138, 14, &mu, scoreboard},
-	{"Bravo", 100, 0, 0, 0, 59, 12, &mu, scoreboard},
-	{"Charlie", 100, 0, 0, 0, 109, 2, &mu, scoreboard},
-	{"Delta", 100, 0, 0, 0, 71, 2, &mu, scoreboard},
-	{"Echo", 100, 0, 0, 0, 71, 15, &mu, scoreboard},
-	{"Foxtrot", 100, 0, 0, 0, 109, 15, &mu, scoreboard},
-	{"Golf", 100, 0, 0, 0, 61, 15, &mu, scoreboard},
-	{"Average", 100, 0, 0, 0, 95, 11, &mu, scoreboard},
+func main() {
+	server()
 }
 
-func main() {
-
+func server() {
+	var bots = []bot.Bot{
+		{Name: "Alpha", Cash: 100, LongWin: 138, ShortWin: 14, Mu: &mu, SB: scoreboard},
+		{Name: "Bravo", Cash: 100, LongWin: 59, ShortWin: 12, Mu: &mu, SB: scoreboard},
+		{Name: "Charlie", Cash: 100, LongWin: 109, ShortWin: 2, Mu: &mu, SB: scoreboard},
+		{Name: "Delta", Cash: 100, LongWin: 71, ShortWin: 2, Mu: &mu, SB: scoreboard},
+		{Name: "Echo", Cash: 100, LongWin: 71, ShortWin: 15, Mu: &mu, SB: scoreboard},
+		{Name: "Foxtrot", Cash: 100, LongWin: 109, ShortWin: 15, Mu: &mu, SB: scoreboard},
+		{Name: "Golf", Cash: 100, LongWin: 61, ShortWin: 15, Mu: &mu, SB: scoreboard},
+		{Name: "Average", Cash: 100, LongWin: 95, ShortWin: 11, Mu: &mu, SB: scoreboard},
+	}
 	for _, b := range bots {
 		b := b
 		go b.Trade()

@@ -16,13 +16,13 @@ type Summary struct {
 type Bot struct {
 	Name     string
 	Cash     float64
-	Shares   float64
-	Basis    float64
-	TotalVal float64
 	LongWin  int
 	ShortWin int
 	Mu       *sync.Mutex
 	SB       map[string]Summary
+	Shares   float64
+	Basis    float64
+	TotalVal float64
 }
 
 func (b *Bot) Trade() {
