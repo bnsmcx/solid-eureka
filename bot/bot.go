@@ -13,15 +13,17 @@ type Summary struct {
 }
 
 type Bot struct {
-	Name     string
-	Cash     float64
-	LongWin  int
-	ShortWin int
-	Mu       *sync.Mutex
-	SB       map[string]Summary
-	Shares   float64
-	Basis    float64
-	TotalVal float64
+	Name          string
+	Cash          float64
+	LongWin       int
+	ShortWin      int
+	Mu            *sync.Mutex
+	SB            map[string]Summary
+	Shares        float64
+	Basis         float64
+	TotalVal      float64
+	EnableLogging bool
+	MADMultiplier float64
 }
 
 func (b *Bot) Trade() {
@@ -34,21 +36,24 @@ func (b *Bot) Trade() {
 
 		//longAvg, shortAvg, err := yahoo.GetAverages(b.LongWin, b.ShortWin)
 		shortAvg, longAvg, longMAD, currentPrice, err := test.GetAverages(b.LongWin, b.ShortWin, day)
-		_ = longMAD
 		if err != nil {
-			//log.Println("Bot.Trade(): ", err)
+			if b.EnableLogging {
+				log.Println("Bot.Trade(): ", err)
+			}
 			return
 		}
 		b.Basis = currentPrice
 		//currentPrice, err := binance.GetPrice()
 		if err != nil {
-			//log.Println("Bot.Trade(): ", err)
+			if b.EnableLogging {
+				log.Println("Bot.Trade(): ", err)
+			}
 			return
 		}
 
-		if shortAvg > longAvg+longMAD && b.Shares > 0.0 {
+		if shortAvg > longAvg+(longMAD*b.MADMultiplier) && b.Shares > 0.0 {
 			b.Sell(currentPrice)
-		} else if shortAvg < longAvg-longMAD && b.Cash > 0.0 {
+		} else if shortAvg < longAvg-(longMAD*b.MADMultiplier) && b.Cash > 0.0 {
 			b.Buy(currentPrice)
 		}
 		day++
@@ -65,7 +70,9 @@ func (b *Bot) UpdateScoreboard() {
 
 func (b *Bot) Sell(price float64) {
 	b.Cash += b.Shares * price
-	log.Printf("SELL: %s sold %f shares at $%.2f", b.Name, b.Shares, price)
+	if b.EnableLogging {
+		log.Printf("SELL: %s sold %f shares at $%.2f", b.Name, b.Shares, price)
+	}
 	b.Shares = 0
 }
 
@@ -73,5 +80,7 @@ func (b *Bot) Buy(price float64) {
 	b.Shares += b.Cash / price
 	b.Cash = 0
 	b.Basis = price
-	log.Printf("BUY: %s bought %f shares at $%.2f", b.Name, b.Shares, price)
+	if b.EnableLogging {
+		log.Printf("BUY: %s bought %f shares at $%.2f", b.Name, b.Shares, price)
+	}
 }

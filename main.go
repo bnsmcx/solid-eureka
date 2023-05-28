@@ -5,52 +5,83 @@ import (
 	"log"
 	"net/http"
 	"solid-eureka/bot"
+	"solid-eureka/test"
 	"strings"
 	"sync"
+	"time"
 )
 
 var scoreboard = make(map[string]bot.Summary)
 var mu sync.Mutex
 
 func main() {
-	//server()
-	findOptimalBotSettings()
+	server()
+	//findOptimalBotSettings()
 }
 
 func findOptimalBotSettings() {
-	var topPerformer float64
-	var settings bot.Bot
+	dataSets := []string{
+		"2015", "2016", "2017", "2018", "2019", "2020", "2021", "2022",
+	}
 
-	for i := 18; i > 0; i-- {
-		for j := 9; j > 0; j-- {
-			b := bot.Bot{
-				Cash:     100,
-				LongWin:  i,
-				ShortWin: j,
-				Mu:       &mu,
-				SB:       scoreboard,
-			}
-			b.Trade()
-			if b.TotalVal > topPerformer {
-				topPerformer = b.TotalVal
-				settings = b
+	wg := sync.WaitGroup{}
+	start := time.Now()
+	fmt.Println("" +
+		"\nThe following are the optimum settings for the trading " +
+		"\nalgorithm for each respective year.  " +
+		"\n\nEach test started with $100.")
+	for _, set := range dataSets {
+		var topPerformer float64
+		var settings bot.Bot
+		test.ActiveDataSet = "/home/ben/repos/solid-eureka/test/test_data/" +
+			set + ".csv"
+		for i := 120; i > 0; i-- {
+			for j := 45; j > 0; j-- {
+				for k := 0.0; k < 3.5; k += .5 {
+					wg.Add(1)
+					go func(i, j int, k float64) {
+						b := bot.Bot{
+							Cash:     100,
+							LongWin:  i,
+							ShortWin: j,
+							Mu:       &mu,
+							SB:       scoreboard,
+						}
+						b.EnableLogging = false
+						b.MADMultiplier = k
+						b.Trade()
+						mu.Lock()
+						if b.TotalVal > topPerformer {
+							topPerformer = b.TotalVal
+							settings = b
+						}
+						mu.Unlock()
+						wg.Done()
+					}(i, j, k)
+				}
 			}
 		}
+		wg.Wait()
+		fmt.Printf("\n\nTop Performer for %s: $%.2f  (%.2f%%)\n",
+			set, topPerformer, (topPerformer/100.0)*100)
+		fmt.Printf("\tLong Window: %d\n", settings.LongWin)
+		fmt.Printf("\tShort Window: %d\n", settings.ShortWin)
+		fmt.Printf("\tMAD Multiplier: %.2f\n", settings.MADMultiplier)
 	}
-	fmt.Println("\n\nTop Performer: ", topPerformer)
-	fmt.Printf("%+v\n", settings)
+	fmt.Println("\nExecution time: ", time.Since(start).String())
+
 }
 
 func server() {
 	var bots = []bot.Bot{
-		{Name: "Alpha", Cash: 100, LongWin: 138, ShortWin: 14, Mu: &mu, SB: scoreboard},
-		{Name: "Bravo", Cash: 100, LongWin: 59, ShortWin: 12, Mu: &mu, SB: scoreboard},
-		{Name: "Charlie", Cash: 100, LongWin: 109, ShortWin: 2, Mu: &mu, SB: scoreboard},
-		{Name: "Delta", Cash: 100, LongWin: 71, ShortWin: 2, Mu: &mu, SB: scoreboard},
-		{Name: "Echo", Cash: 100, LongWin: 71, ShortWin: 15, Mu: &mu, SB: scoreboard},
-		{Name: "Foxtrot", Cash: 100, LongWin: 109, ShortWin: 15, Mu: &mu, SB: scoreboard},
-		{Name: "Golf", Cash: 100, LongWin: 61, ShortWin: 15, Mu: &mu, SB: scoreboard},
-		{Name: "Average", Cash: 100, LongWin: 95, ShortWin: 11, Mu: &mu, SB: scoreboard},
+		{Name: "2015", Cash: 100, LongWin: 31, ShortWin: 3, MADMultiplier: 3.0, Mu: &mu, SB: scoreboard},
+		{Name: "2016", Cash: 100, LongWin: 15, ShortWin: 3, MADMultiplier: 2.5, Mu: &mu, SB: scoreboard},
+		{Name: "2017", Cash: 100, LongWin: 28, ShortWin: 24, MADMultiplier: 0.5, Mu: &mu, SB: scoreboard},
+		{Name: "2018", Cash: 100, LongWin: 30, ShortWin: 13, MADMultiplier: 1.0, Mu: &mu, SB: scoreboard},
+		{Name: "2019", Cash: 100, LongWin: 12, ShortWin: 3, MADMultiplier: 2.0, Mu: &mu, SB: scoreboard},
+		{Name: "2020", Cash: 100, LongWin: 37, ShortWin: 9, MADMultiplier: 2.0, Mu: &mu, SB: scoreboard},
+		{Name: "2021", Cash: 100, LongWin: 24, ShortWin: 16, MADMultiplier: 0.0, Mu: &mu, SB: scoreboard},
+		{Name: "2022", Cash: 100, LongWin: 25, ShortWin: 16, MADMultiplier: 0.5, Mu: &mu, SB: scoreboard},
 	}
 	for _, b := range bots {
 		b := b
