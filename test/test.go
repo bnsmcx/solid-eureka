@@ -9,7 +9,7 @@ import (
 	"strconv"
 )
 
-var ActiveDataSet = "/home/ben/repos/solid-eureka/test/test_data/down_A.csv"
+var ActiveDataSet = "/home/ben/repos/solid-eureka/test/test_data/VTSAX.csv"
 
 func GetAverages(longWin, shortWin, day int) (float64, float64, float64, float64, error) {
 	f, err := os.Open(ActiveDataSet)

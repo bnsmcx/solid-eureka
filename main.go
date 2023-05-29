@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"solid-eureka/bot"
+	"solid-eureka/coincap"
 	"solid-eureka/test"
 	"strings"
 	"sync"
@@ -15,13 +16,23 @@ var scoreboard = make(map[string]bot.Summary)
 var mu sync.Mutex
 
 func main() {
-	server()
+	startDate := time.Now().AddDate(0, 0, -2).UnixMilli()
+	endDate := time.Now().UnixMilli()
+	data, err := coincap.GetDataForRange(startDate, endDate)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	for _, v := range data {
+		fmt.Println(v)
+	}
+	fmt.Println(len(data))
+	//server()
 	//findOptimalBotSettings()
 }
 
 func findOptimalBotSettings() {
 	dataSets := []string{
-		"2015", "2016", "2017", "2018", "2019", "2020", "2021", "2022",
+		"max",
 	}
 
 	wg := sync.WaitGroup{}
@@ -47,7 +58,7 @@ func findOptimalBotSettings() {
 							Mu:       &mu,
 							SB:       scoreboard,
 						}
-						b.EnableLogging = false
+						b.EnableLogging = true
 						b.MADMultiplier = k
 						b.Trade()
 						mu.Lock()

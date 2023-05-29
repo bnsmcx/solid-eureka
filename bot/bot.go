@@ -30,9 +30,6 @@ func (b *Bot) Trade() {
 	day := 0
 	for {
 		b.UpdateScoreboard()
-		if day > 365 {
-			return
-		}
 
 		//longAvg, shortAvg, err := yahoo.GetAverages(b.LongWin, b.ShortWin)
 		shortAvg, longAvg, longMAD, currentPrice, err := test.GetAverages(b.LongWin, b.ShortWin, day)
