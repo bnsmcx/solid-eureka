@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"solid-eureka/binance"
 	"solid-eureka/bot"
 	"solid-eureka/coincap"
 	"solid-eureka/test"
@@ -15,23 +16,35 @@ import (
 var scoreboard = make(map[string]bot.Summary)
 var mu sync.Mutex
 
-func main() {
-	for i := 0; i < 8; i++ {
-		startDate := time.Now().AddDate(0, 0, -(180 * (i + 1)))
-		endDate := time.Now().AddDate(0, 0, -(180 * i))
-		fmt.Println("\n### Testing ", startDate.String(), " through ", endDate.String())
-		data, err := coincap.GetDataForRange(startDate.UnixMilli(), endDate.UnixMilli())
-		if err != nil {
-			log.Fatalln(err)
-		}
-		findOptimalBotSettings(data)
-	}
+type botSetting struct {
+	LongWin       int
+	ShortWin      int
+	MADMultiplier float64
+}
 
-	//runSimulation()
+var botSettings = []botSetting{
+	{31, 28, 0.3}, {16, 2, 1.5}, {60, 4, 2.4},
+	{31, 18, 0.3}, {6, 2, 5.5}, {20, 4, 2.4},
+	{9, 2, 1.5}, {30, 4, 2.4},
+}
+
+func main() {
+	//for i := 0; i < 8; i++ {
+	//	startDate := time.Now().AddDate(0, 0, -(30 * (i + 1)))
+	//	endDate := time.Now().AddDate(0, 0, -(30 * i))
+	//	fmt.Println("\n### Testing ", startDate.String(), " through ", endDate.String())
+	//	data, err := coincap.GetDataForRange(startDate.UnixMilli(), endDate.UnixMilli())
+	//	if err != nil {
+	//		log.Fatalln(err)
+	//	}
+	//	findOptimalBotSettings(data)
+	//}
+
+	runSimulation()
 }
 
 func runSimulation() {
-	startDate := time.Now().AddDate(0, 0, -365)
+	startDate := time.Now().AddDate(0, 0, -30)
 	endDate := time.Now()
 	fmt.Println("\n### Testing ", startDate.String(), " through ", endDate.String())
 	data, err := coincap.GetDataForRange(startDate.UnixMilli(), endDate.UnixMilli())
@@ -86,20 +99,9 @@ func findOptimalBotSettings(data []float64) {
 }
 
 func server() {
-	var bots = []bot.Bot{
-		{Name: "A", Cash: 100, LongWin: 5, ShortWin: 1, MADMultiplier: 1.8},
-		{Name: "B", Cash: 100, LongWin: 13, ShortWin: 12, MADMultiplier: 0.3},
-		{Name: "C", Cash: 100, LongWin: 25, ShortWin: 2, MADMultiplier: 3.8},
-		{Name: "D", Cash: 100, LongWin: 26, ShortWin: 10, MADMultiplier: 1.3},
-		{Name: "E", Cash: 100, LongWin: 34, ShortWin: 32, MADMultiplier: 0.2},
-		{Name: "F", Cash: 100, LongWin: 46, ShortWin: 25, MADMultiplier: 0.8},
-		{Name: "G", Cash: 100, LongWin: 90, ShortWin: 3, MADMultiplier: 4.0},
-		{Name: "H", Cash: 100, LongWin: 94, ShortWin: 1, MADMultiplier: 5.6},
-	}
+	var bots = buildBots(botSettings)
 	for _, b := range bots {
 		b := b
-		b.Mu = &mu
-		b.SB = scoreboard
 		b.EnableLogging = true
 		go b.Trade()
 	}
@@ -109,6 +111,29 @@ func server() {
 	if err != nil {
 		log.Fatalln(err)
 	}
+}
+
+func buildBots(settings []botSetting) []bot.Bot {
+	cash, err := binance.GetAccountBalance()
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	var bots []bot.Bot
+	for _, s := range settings {
+		b := bot.Bot{
+			Name:          fmt.Sprintf("%d-%d-%.1f", s.LongWin, s.ShortWin, s.MADMultiplier),
+			Cash:          cash / float64(len(settings)),
+			LongWin:       s.LongWin,
+			ShortWin:      s.ShortWin,
+			MADMultiplier: s.MADMultiplier,
+			Mu:            &mu,
+			SB:            scoreboard,
+		}
+		bots = append(bots, b)
+	}
+
+	return bots
 }
 
 func handleScoreboard(w http.ResponseWriter, r *http.Request) {
@@ -127,18 +152,16 @@ func getScoreboard() string {
 	sb.WriteString(fmt.Sprintf(headerFormat, 10, " ", 10, "Cash", 10, "Shares", 10, "Total"))
 	sb.WriteString(border)
 
-	order := []string{"A", "B", "C", "D", "E", "F", "G", "H"}
-
 	portfolioValue := 0.0
 
 	mu.Lock()
-	for _, name := range order {
-		portfolioValue += scoreboard[name].TotalVal
+	for k, v := range scoreboard {
+		portfolioValue += v.TotalVal
 		entry := fmt.Sprintf(entryFormat,
-			10, name,
-			10, scoreboard[name].Cash,
-			10, scoreboard[name].Shares,
-			10, scoreboard[name].TotalVal)
+			10, k,
+			10, v.Cash,
+			10, v.Shares,
+			10, v.TotalVal)
 		sb.WriteString(entry)
 	}
 	mu.Unlock()

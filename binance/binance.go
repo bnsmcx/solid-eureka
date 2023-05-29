@@ -24,6 +24,10 @@ func Ping() error {
 	return nil
 }
 
+func GetAccountBalance() (float64, error) {
+	return 800.0, nil
+}
+
 func GetPrice() (float64, error) {
 	endpoint := "/api/v3/ticker/price?symbol=BTCUSD"
 
