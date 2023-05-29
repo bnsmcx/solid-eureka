@@ -27,12 +27,12 @@ type Bot struct {
 }
 
 func (b *Bot) Trade() {
-	day := 0
+	tick := 0
 	for {
 		b.UpdateScoreboard()
 
 		//longAvg, shortAvg, err := yahoo.GetAverages(b.LongWin, b.ShortWin)
-		shortAvg, longAvg, longMAD, currentPrice, err := test.GetAverages(b.LongWin, b.ShortWin, day)
+		shortAvg, longAvg, longMAD, currentPrice, err := test.GetAverages(b.LongWin, b.ShortWin, tick)
 		if err != nil {
 			if b.EnableLogging {
 				log.Println("Bot.Trade(): ", err)
@@ -53,7 +53,7 @@ func (b *Bot) Trade() {
 		} else if shortAvg < longAvg-(longMAD*b.MADMultiplier) && b.Cash > 0.0 {
 			b.Buy(currentPrice)
 		}
-		day++
+		tick++
 	}
 }
 

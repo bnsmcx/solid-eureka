@@ -16,14 +16,30 @@ var scoreboard = make(map[string]bot.Summary)
 var mu sync.Mutex
 
 func main() {
-	startDate := time.Now().AddDate(0, 0, -600).UnixMilli()
-	endDate := time.Now().UnixMilli()
-	data, err := coincap.GetDataForRange(startDate, endDate)
+	for i := 0; i < 8; i++ {
+		startDate := time.Now().AddDate(0, 0, -(180 * (i + 1)))
+		endDate := time.Now().AddDate(0, 0, -(180 * i))
+		fmt.Println("\n### Testing ", startDate.String(), " through ", endDate.String())
+		data, err := coincap.GetDataForRange(startDate.UnixMilli(), endDate.UnixMilli())
+		if err != nil {
+			log.Fatalln(err)
+		}
+		findOptimalBotSettings(data)
+	}
+
+	//runSimulation()
+}
+
+func runSimulation() {
+	startDate := time.Now().AddDate(0, 0, -365)
+	endDate := time.Now()
+	fmt.Println("\n### Testing ", startDate.String(), " through ", endDate.String())
+	data, err := coincap.GetDataForRange(startDate.UnixMilli(), endDate.UnixMilli())
 	if err != nil {
 		log.Fatalln(err)
 	}
-	//server()
-	findOptimalBotSettings(data)
+	test.ActiveDataSet = data
+	server()
 }
 
 func findOptimalBotSettings(data []float64) {
@@ -35,7 +51,7 @@ func findOptimalBotSettings(data []float64) {
 	test.ActiveDataSet = data
 	for i := 120; i > 0; i-- {
 		for j := 45; j > 0; j-- {
-			for k := 0.0; k < 3.5; k += .5 {
+			for k := 0.0; k < 6.0; k += .1 {
 				wg.Add(1)
 				go func(i, j int, k float64) {
 					b := bot.Bot{
@@ -45,7 +61,7 @@ func findOptimalBotSettings(data []float64) {
 						Mu:       &mu,
 						SB:       scoreboard,
 					}
-					b.EnableLogging = true
+					b.EnableLogging = false
 					b.MADMultiplier = k
 					b.Trade()
 					mu.Lock()
@@ -61,7 +77,7 @@ func findOptimalBotSettings(data []float64) {
 	}
 	wg.Wait()
 	fmt.Printf("\n\nTop Performer: $%.2f  (%.2f%%)\n",
-		topPerformer, (topPerformer/100.0)*100)
+		topPerformer, ((topPerformer-100)/100.0)*100)
 	fmt.Printf("\tLong Window: %d\n", settings.LongWin)
 	fmt.Printf("\tShort Window: %d\n", settings.ShortWin)
 	fmt.Printf("\tMAD Multiplier: %.2f\n", settings.MADMultiplier)
@@ -71,14 +87,14 @@ func findOptimalBotSettings(data []float64) {
 
 func server() {
 	var bots = []bot.Bot{
-		{Name: "2015", Cash: 100, LongWin: 31, ShortWin: 3, MADMultiplier: 3.0},
-		{Name: "2016", Cash: 100, LongWin: 15, ShortWin: 3, MADMultiplier: 2.5},
-		{Name: "2017", Cash: 100, LongWin: 28, ShortWin: 24, MADMultiplier: 0.5},
-		{Name: "2018", Cash: 100, LongWin: 30, ShortWin: 13, MADMultiplier: 1.0},
-		{Name: "2019", Cash: 100, LongWin: 12, ShortWin: 3, MADMultiplier: 2.0},
-		{Name: "2020", Cash: 100, LongWin: 37, ShortWin: 9, MADMultiplier: 2.0},
-		{Name: "2021", Cash: 100, LongWin: 24, ShortWin: 16, MADMultiplier: 0.0},
-		{Name: "2022", Cash: 100, LongWin: 25, ShortWin: 16, MADMultiplier: 0.5},
+		{Name: "A", Cash: 100, LongWin: 5, ShortWin: 1, MADMultiplier: 1.8},
+		{Name: "B", Cash: 100, LongWin: 13, ShortWin: 12, MADMultiplier: 0.3},
+		{Name: "C", Cash: 100, LongWin: 25, ShortWin: 2, MADMultiplier: 3.8},
+		{Name: "D", Cash: 100, LongWin: 26, ShortWin: 10, MADMultiplier: 1.3},
+		{Name: "E", Cash: 100, LongWin: 34, ShortWin: 32, MADMultiplier: 0.2},
+		{Name: "F", Cash: 100, LongWin: 46, ShortWin: 25, MADMultiplier: 0.8},
+		{Name: "G", Cash: 100, LongWin: 90, ShortWin: 3, MADMultiplier: 4.0},
+		{Name: "H", Cash: 100, LongWin: 94, ShortWin: 1, MADMultiplier: 5.6},
 	}
 	for _, b := range bots {
 		b := b
@@ -111,7 +127,7 @@ func getScoreboard() string {
 	sb.WriteString(fmt.Sprintf(headerFormat, 10, " ", 10, "Cash", 10, "Shares", 10, "Total"))
 	sb.WriteString(border)
 
-	order := []string{"2015", "2016", "2017", "2018", "2019", "2020", "2021", "2022"}
+	order := []string{"A", "B", "C", "D", "E", "F", "G", "H"}
 
 	portfolioValue := 0.0
 

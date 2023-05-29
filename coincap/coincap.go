@@ -20,7 +20,7 @@ type PriceData struct {
 }
 
 func GetDataForRange(start, end int64) ([]float64, error) {
-	baseURL := "https://api.coincap.io/v2/assets/bitcoin/history?interval=h12"
+	baseURL := "https://api.coincap.io/v2/assets/bitcoin/history?interval=h6"
 	intervalSettings := fmt.Sprintf("&start=%d&end=%d", start, end)
 
 	resp, err := http.Get(baseURL + intervalSettings)
