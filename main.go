@@ -16,69 +16,55 @@ var scoreboard = make(map[string]bot.Summary)
 var mu sync.Mutex
 
 func main() {
-	startDate := time.Now().AddDate(0, 0, -2).UnixMilli()
+	startDate := time.Now().AddDate(0, 0, -600).UnixMilli()
 	endDate := time.Now().UnixMilli()
 	data, err := coincap.GetDataForRange(startDate, endDate)
 	if err != nil {
 		log.Fatalln(err)
 	}
-	for _, v := range data {
-		fmt.Println(v)
-	}
-	fmt.Println(len(data))
 	//server()
-	//findOptimalBotSettings()
+	findOptimalBotSettings(data)
 }
 
-func findOptimalBotSettings() {
-	dataSets := []string{
-		"max",
-	}
+func findOptimalBotSettings(data []float64) {
 
 	wg := sync.WaitGroup{}
 	start := time.Now()
-	fmt.Println("" +
-		"\nThe following are the optimum settings for the trading " +
-		"\nalgorithm for each respective year.  " +
-		"\n\nEach test started with $100.")
-	for _, set := range dataSets {
-		var topPerformer float64
-		var settings bot.Bot
-		test.ActiveDataSet = "/home/ben/repos/solid-eureka/test/test_data/" +
-			set + ".csv"
-		for i := 120; i > 0; i-- {
-			for j := 45; j > 0; j-- {
-				for k := 0.0; k < 3.5; k += .5 {
-					wg.Add(1)
-					go func(i, j int, k float64) {
-						b := bot.Bot{
-							Cash:     100,
-							LongWin:  i,
-							ShortWin: j,
-							Mu:       &mu,
-							SB:       scoreboard,
-						}
-						b.EnableLogging = true
-						b.MADMultiplier = k
-						b.Trade()
-						mu.Lock()
-						if b.TotalVal > topPerformer {
-							topPerformer = b.TotalVal
-							settings = b
-						}
-						mu.Unlock()
-						wg.Done()
-					}(i, j, k)
-				}
+	var topPerformer float64
+	var settings bot.Bot
+	test.ActiveDataSet = data
+	for i := 120; i > 0; i-- {
+		for j := 45; j > 0; j-- {
+			for k := 0.0; k < 3.5; k += .5 {
+				wg.Add(1)
+				go func(i, j int, k float64) {
+					b := bot.Bot{
+						Cash:     100,
+						LongWin:  i,
+						ShortWin: j,
+						Mu:       &mu,
+						SB:       scoreboard,
+					}
+					b.EnableLogging = true
+					b.MADMultiplier = k
+					b.Trade()
+					mu.Lock()
+					if b.TotalVal > topPerformer {
+						topPerformer = b.TotalVal
+						settings = b
+					}
+					mu.Unlock()
+					wg.Done()
+				}(i, j, k)
 			}
 		}
-		wg.Wait()
-		fmt.Printf("\n\nTop Performer for %s: $%.2f  (%.2f%%)\n",
-			set, topPerformer, (topPerformer/100.0)*100)
-		fmt.Printf("\tLong Window: %d\n", settings.LongWin)
-		fmt.Printf("\tShort Window: %d\n", settings.ShortWin)
-		fmt.Printf("\tMAD Multiplier: %.2f\n", settings.MADMultiplier)
 	}
+	wg.Wait()
+	fmt.Printf("\n\nTop Performer: $%.2f  (%.2f%%)\n",
+		topPerformer, (topPerformer/100.0)*100)
+	fmt.Printf("\tLong Window: %d\n", settings.LongWin)
+	fmt.Printf("\tShort Window: %d\n", settings.ShortWin)
+	fmt.Printf("\tMAD Multiplier: %.2f\n", settings.MADMultiplier)
 	fmt.Println("\nExecution time: ", time.Since(start).String())
 
 }

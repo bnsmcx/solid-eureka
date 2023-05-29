@@ -9,10 +9,10 @@ import (
 	"strconv"
 )
 
-var ActiveDataSet = "/home/ben/repos/solid-eureka/test/test_data/VTSAX.csv"
+var ActiveDataSet []float64
 
-func GetAverages(longWin, shortWin, day int) (float64, float64, float64, float64, error) {
-	f, err := os.Open(ActiveDataSet)
+func GetDataFromFile(filename string) []float64 {
+	f, err := os.Open(filename)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -24,14 +24,17 @@ func GetAverages(longWin, shortWin, day int) (float64, float64, float64, float64
 	if err != nil {
 		log.Fatal(err)
 	}
+	return parseFloats(records)
+}
 
-	if (longWin + day) > len(records) {
+func GetAverages(longWin, shortWin, day int) (float64, float64, float64, float64, error) {
+
+	if (longWin + day) > len(ActiveDataSet) {
 		return 0, 0, 0, 0, errors.New("hit end of longData set")
 	}
 
 	// Grab the relevant slice of records and convert to float
-	records = records[day : day+longWin]
-	longData := parseFloats(records)
+	longData := ActiveDataSet[day : day+longWin]
 
 	// Make sure we haven't hit the end of the data and get short window slice
 	if len(longData)-shortWin < 1 {

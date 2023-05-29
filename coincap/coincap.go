@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"strconv"
 	"time"
@@ -19,11 +20,13 @@ type PriceData struct {
 }
 
 func GetDataForRange(start, end int64) ([]float64, error) {
-	baseURL := "https://api.coincap.io/v2/assets/bitcoin/history?interval=h1"
+	baseURL := "https://api.coincap.io/v2/assets/bitcoin/history?interval=h12"
 	intervalSettings := fmt.Sprintf("&start=%d&end=%d", start, end)
 
 	resp, err := http.Get(baseURL + intervalSettings)
 	if err != nil || resp.StatusCode != 200 {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		fmt.Println(string(bodyBytes))
 		return nil, fmt.Errorf("getting data from coincap.io: status: %s, error: %s",
 			resp.Status, err)
 	}
