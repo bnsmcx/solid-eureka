@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"solid-eureka/binance"
 	"solid-eureka/bot"
 	"solid-eureka/coincap"
 	"solid-eureka/test"
@@ -23,13 +22,18 @@ type botSetting struct {
 }
 
 var botSettings = []botSetting{
-	{31, 28, 0.3}, {16, 2, 1.5}, {60, 4, 2.4},
-	{31, 18, 0.3}, {6, 2, 5.5}, {20, 4, 2.4},
-	{9, 2, 1.5}, {30, 4, 2.4},
+	{3, 1, 1.5},
+	{117, 42, 1.3},
+	{25, 22, 0.2},
+	{39, 38, 0.1},
+	{31, 29, 0.1},
+	{32, 31, 0.1},
+	{13, 11, 0.5},
 }
 
 func main() {
-	//for i := 0; i < 8; i++ {
+	//var winners []bot.Bot
+	//for i := 0; i < 12; i++ {
 	//	startDate := time.Now().AddDate(0, 0, -(30 * (i + 1)))
 	//	endDate := time.Now().AddDate(0, 0, -(30 * i))
 	//	fmt.Println("\n### Testing ", startDate.String(), " through ", endDate.String())
@@ -37,15 +41,28 @@ func main() {
 	//	if err != nil {
 	//		log.Fatalln(err)
 	//	}
-	//	findOptimalBotSettings(data)
+	//	winners = append(winners, findOptimalBotSettings(data))
 	//}
-
+	//botSettings = parseSettingsFromBots(winners)
 	runSimulation()
 }
 
+func parseSettingsFromBots(bots []bot.Bot) []botSetting {
+	var settings []botSetting
+	for _, b := range bots {
+		s := botSetting{
+			LongWin:       b.LongWin,
+			ShortWin:      b.ShortWin,
+			MADMultiplier: b.MADMultiplier,
+		}
+		settings = append(settings, s)
+	}
+	return settings
+}
+
 func runSimulation() {
-	startDate := time.Now().AddDate(0, 0, -30)
-	endDate := time.Now()
+	startDate := time.Now().AddDate(0, 0, -30*24)
+	endDate := time.Now().AddDate(0, 0, -30*23)
 	fmt.Println("\n### Testing ", startDate.String(), " through ", endDate.String())
 	data, err := coincap.GetDataForRange(startDate.UnixMilli(), endDate.UnixMilli())
 	if err != nil {
@@ -55,10 +72,8 @@ func runSimulation() {
 	server()
 }
 
-func findOptimalBotSettings(data []float64) {
-
+func findOptimalBotSettings(data []float64) bot.Bot {
 	wg := sync.WaitGroup{}
-	start := time.Now()
 	var topPerformer float64
 	var settings bot.Bot
 	test.ActiveDataSet = data
@@ -89,20 +104,15 @@ func findOptimalBotSettings(data []float64) {
 		}
 	}
 	wg.Wait()
-	fmt.Printf("\n\nTop Performer: $%.2f  (%.2f%%)\n",
-		topPerformer, ((topPerformer-100)/100.0)*100)
-	fmt.Printf("\tLong Window: %d\n", settings.LongWin)
-	fmt.Printf("\tShort Window: %d\n", settings.ShortWin)
-	fmt.Printf("\tMAD Multiplier: %.2f\n", settings.MADMultiplier)
-	fmt.Println("\nExecution time: ", time.Since(start).String())
-
+	fmt.Printf("%+v", settings)
+	return settings
 }
 
 func server() {
 	var bots = buildBots(botSettings)
 	for _, b := range bots {
 		b := b
-		b.EnableLogging = true
+		b.EnableLogging = false
 		go b.Trade()
 	}
 
@@ -114,16 +124,16 @@ func server() {
 }
 
 func buildBots(settings []botSetting) []bot.Bot {
-	cash, err := binance.GetAccountBalance()
-	if err != nil {
-		log.Fatalln(err)
-	}
+	//cash, err := binance.GetAccountBalance()
+	//if err != nil {
+	//	log.Fatalln(err)
+	//}
 
 	var bots []bot.Bot
-	for _, s := range settings {
+	for i, s := range settings {
 		b := bot.Bot{
-			Name:          fmt.Sprintf("%d-%d-%.1f", s.LongWin, s.ShortWin, s.MADMultiplier),
-			Cash:          cash / float64(len(settings)),
+			Name:          fmt.Sprintf("%d-%d-%.1f-%d", s.LongWin, s.ShortWin, s.MADMultiplier, i),
+			Cash:          100,
 			LongWin:       s.LongWin,
 			ShortWin:      s.ShortWin,
 			MADMultiplier: s.MADMultiplier,
