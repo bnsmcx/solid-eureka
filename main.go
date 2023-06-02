@@ -21,7 +21,17 @@ type botSetting struct {
 	MADMultiplier float64
 }
 
-var botSettings = []botSetting{
+var CONTROLbotSettings = []botSetting{
+	{3, 1, 1.5},
+	{117, 42, 1.3},
+	{25, 22, 0.2},
+	{39, 38, 0.1},
+	{31, 29, 0.1},
+	{32, 31, 0.1},
+	{13, 11, 0.5},
+}
+
+var TESTbotSettings = []botSetting{
 	{3, 1, 1.5},
 	{117, 42, 1.3},
 	{25, 22, 0.2},
@@ -44,7 +54,7 @@ func main() {
 	//	winners = append(winners, findOptimalBotSettings(data))
 	//}
 	//botSettings = parseSettingsFromBots(winners)
-	runSimulation()
+	runSimulationFrom(6)
 }
 
 func parseSettingsFromBots(bots []bot.Bot) []botSetting {
@@ -60,16 +70,36 @@ func parseSettingsFromBots(bots []bot.Bot) []botSetting {
 	return settings
 }
 
-func runSimulation() {
-	startDate := time.Now().AddDate(0, 0, -30*24)
-	endDate := time.Now().AddDate(0, 0, -30*23)
-	fmt.Println("\n### Testing ", startDate.String(), " through ", endDate.String())
-	data, err := coincap.GetDataForRange(startDate.UnixMilli(), endDate.UnixMilli())
-	if err != nil {
-		log.Fatalln(err)
+func runSimulationFrom(months int) {
+	var avgReturnSum float64
+	for month := months; month >= 0; month-- {
+		startDate := time.Now().AddDate(0, 0, -30*(month+1))
+		endDate := time.Now().AddDate(0, 0, -30*month)
+		data, err := coincap.GetDataForRange(startDate.UnixMilli(), endDate.UnixMilli())
+		if err != nil {
+			log.Fatalln(err)
+		}
+		test.ActiveDataSet = data
+		var bots = buildBots(CONTROLbotSettings)
+		//var bots = buildBots(TESTbotSettings)
+
+		var total float64
+		var wg sync.WaitGroup
+		for _, b := range bots {
+			b := b
+			b.EnableLogging = false
+			wg.Add(1)
+			go func(b bot.Bot) {
+				total += b.Trade()
+				wg.Done()
+			}(b)
+		}
+		wg.Wait()
+		startValue := float64(len(bots) * 100)
+		returnRate := (total - startValue) / startValue
+		fmt.Println(month, fmt.Sprintf("%.2f%%", returnRate))
 	}
-	test.ActiveDataSet = data
-	server()
+	fmt.Println("\nAverage return: ", fmt.Sprintf("%.4f%%", avgReturnSum/float64(months)))
 }
 
 func findOptimalBotSettings(data []float64) bot.Bot {
@@ -109,7 +139,8 @@ func findOptimalBotSettings(data []float64) bot.Bot {
 }
 
 func server() {
-	var bots = buildBots(botSettings)
+	var bots = buildBots(CONTROLbotSettings)
+	//var bots = buildBots(TESTbotSettings)
 	for _, b := range bots {
 		b := b
 		b.EnableLogging = false

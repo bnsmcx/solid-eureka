@@ -26,7 +26,7 @@ type Bot struct {
 	MADMultiplier float64
 }
 
-func (b *Bot) Trade() {
+func (b *Bot) Trade() float64 {
 	tick := 0
 	for {
 		b.UpdateScoreboard()
@@ -37,7 +37,7 @@ func (b *Bot) Trade() {
 			if b.EnableLogging {
 				log.Println("Bot.Trade(): ", err)
 			}
-			return
+			return b.TotalVal
 		}
 		b.Basis = currentPrice
 		//currentPrice, err := binance.GetPrice()
@@ -45,7 +45,7 @@ func (b *Bot) Trade() {
 			if b.EnableLogging {
 				log.Println("Bot.Trade(): ", err)
 			}
-			return
+			return b.TotalVal
 		}
 
 		if shortAvg > longAvg+(longMAD*b.MADMultiplier) && b.Shares > 0.0 {
