@@ -2,6 +2,7 @@ package bot
 
 import (
 	"log"
+	"math"
 	"solid-eureka/test"
 	"sync"
 )
@@ -13,21 +14,23 @@ type Summary struct {
 }
 
 type Bot struct {
-	Name          string
-	Cash          float64
-	LongWin       int
-	ShortWin      int
-	Mu            *sync.Mutex
-	SB            map[string]Summary
-	Shares        float64
-	Basis         float64
-	TotalVal      float64
-	EnableLogging bool
-	MADMultiplier float64
+	Name             string
+	Cash             float64
+	LongWin          int
+	ShortWin         int
+	Mu               *sync.Mutex
+	SB               map[string]Summary
+	Shares           float64
+	Basis            float64
+	TotalVal         float64
+	EnableLogging    bool
+	MADMultiplier    float64
+	BuyThresholdPerc float64
 }
 
-func (b *Bot) Trade() {
+func (b *Bot) Trade() float64 {
 	tick := 0
+	bottom := math.Inf(1)
 	for {
 		b.UpdateScoreboard()
 
@@ -37,7 +40,7 @@ func (b *Bot) Trade() {
 			if b.EnableLogging {
 				log.Println("Bot.Trade(): ", err)
 			}
-			return
+			return b.TotalVal
 		}
 		b.Basis = currentPrice
 		//currentPrice, err := binance.GetPrice()
@@ -45,13 +48,22 @@ func (b *Bot) Trade() {
 			if b.EnableLogging {
 				log.Println("Bot.Trade(): ", err)
 			}
-			return
+			return b.TotalVal
 		}
 
 		if shortAvg > longAvg+(longMAD*b.MADMultiplier) && b.Shares > 0.0 {
+			bottom = math.Inf(1)
 			b.Sell(currentPrice)
 		} else if shortAvg < longAvg-(longMAD*b.MADMultiplier) && b.Cash > 0.0 {
-			b.Buy(currentPrice)
+			if currentPrice <= bottom {
+				bottom = currentPrice
+			} else {
+				bottomToAvgDist := longAvg - bottom
+				buyTrigger := bottom + (bottomToAvgDist * b.BuyThresholdPerc)
+				if currentPrice > buyTrigger {
+					b.Buy(currentPrice)
+				}
+			}
 		}
 		tick++
 	}
